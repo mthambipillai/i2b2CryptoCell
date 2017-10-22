@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<service name="CryptoService" scope="request">
+    <description>
+        Crypto Processing Service
+    </description>
+    <operation name="getModifiers">
+        <messageReceiver class="org.apache.axis2.receivers.RawXMLINOutMessageReceiver"/>
+    </operation>
+    <operation name="getModifierChildren">
+        <messageReceiver class="org.apache.axis2.receivers.RawXMLINOutMessageReceiver"/>
+    </operation>
+    <operation name="getChildren">
+        <messageReceiver class="org.apache.axis2.receivers.RawXMLINOutMessageReceiver"/>
+    </operation>
+    <parameter name="ServiceClass">edu.harvard.i2b2.crypto.ws.CryptoService</parameter>
+</service>
