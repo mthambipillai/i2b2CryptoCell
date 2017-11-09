@@ -30,12 +30,12 @@ public class GetChildrenHandler {
 	}
 	
 	public OMElement execute(OMElement getChildrenElement) throws Exception {
-		Iterator topelems = getChildrenElement.getChildElements();
+		Iterator<?> topelems = getChildrenElement.getChildElements();
 		String clientPublicKey=null;
 		while(topelems.hasNext()){
 			OMElement om = (OMElement) topelems.next();
 			if(om.getQName().toString().equals("message_body")){
-				Iterator body = om.getFirstElement().getChildElements();
+				Iterator<?> body = om.getFirstElement().getChildElements();
 				while(body.hasNext()){
 					OMElement om2 = (OMElement) body.next();
 					if(om2.getQName().toString().equals("pubkey")){
@@ -64,6 +64,9 @@ public class GetChildrenHandler {
 		
 		//MAKE JSON
 		ArrayList<String> keys = findKeys(response);
+		if(keys.isEmpty()){
+			return AXIOMUtil.stringToOM(response);
+		}
 		JSONArray array = new JSONArray(keys);
 		JSONObject o = new JSONObject();
 		o.put("conceptpaths",array);
@@ -73,12 +76,18 @@ public class GetChildrenHandler {
 		
 		//SEND REQUEST WITH JSON TO CRYPTO ENGINE
 		totalNumUrl = new URL("http://127.0.0.1:7500/totalnum");
-		HttpURLConnection conn = (HttpURLConnection) totalNumUrl.openConnection();
-		conn.setRequestProperty("Content-Type", "application/json; charset=UTF-8");
-		conn.setDoOutput(true);
-		OutputStream os = conn.getOutputStream();
-		os.write(o.toString().getBytes("UTF-8"));
-		os.close();
+		HttpURLConnection conn=null;
+		try{
+			conn = (HttpURLConnection) totalNumUrl.openConnection();
+			conn.setRequestProperty("Content-Type", "application/json; charset=UTF-8");
+			conn.setDoOutput(true);
+			OutputStream os = conn.getOutputStream();
+			os.write(o.toString().getBytes("UTF-8"));
+			os.close();
+		}catch(Exception connE){
+			log.info(connE);
+			return AXIOMUtil.stringToOM(response);
+		}
 		
 		//READ AND PARSE RESPONSE FROM CRYPTO ENGINE
 	    BufferedReader rd = new BufferedReader(new InputStreamReader(conn.getInputStream()));
@@ -95,7 +104,8 @@ public class GetChildrenHandler {
 	    try{
 	    	concepts = totalnums.getJSONArray("concepts");
 	    }catch(Exception exception){
-	    	throw new Exception("EMPTY RESULT FROM CRYPTO ENGINE");
+	    	log.info("EMPTY RESULT FROM CRYPTO ENGINE");
+	    	return AXIOMUtil.stringToOM(response);
 	    }
 	    for(int i=0;i<concepts.length();i++){
 	    	JSONObject obj = concepts.getJSONObject(i);

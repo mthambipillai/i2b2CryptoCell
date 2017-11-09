@@ -29,21 +29,32 @@ public class GetTotalNumsHandler {
 	}
 	
 	public OMElement execute(OMElement getTotalNumsElement) throws Exception {
-		Iterator topelems = getTotalNumsElement.getChildElements();
+		Iterator<?> topelems = getTotalNumsElement.getChildElements();
+		DocumentBuilderFactory docFactory = DocumentBuilderFactory.newInstance();
+		DocumentBuilder docBuilder = docFactory.newDocumentBuilder();
+		Document doc = docBuilder.newDocument();
+		Element totalNums = doc.createElement("totalnums");
+		Element body = doc.createElement("message_body");
+		body.appendChild(totalNums);
+		String status = "<response_header><result_status><status type=\"DONE\">processing completed</status></result_status></response_header>";
+		String toRemove = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>";
 		String clientPublicKey=null;
 		String conceptPath=null;
+		String header = null;
 		while(topelems.hasNext()){
 			OMElement om = (OMElement) topelems.next();
 			if(om.getQName().toString().equals("message_body")){
-				Iterator body = om.getFirstElement().getChildElements();
-				while(body.hasNext()){
-					OMElement om2 = (OMElement) body.next();
+				Iterator<?> bodyIt = om.getFirstElement().getChildElements();
+				while(bodyIt.hasNext()){
+					OMElement om2 = (OMElement) bodyIt.next();
 					if(om2.getQName().toString().equals("pubkey")){
 						clientPublicKey = om2.getText();
 					}else if(om2.getQName().toString().equals("concept")){
 						conceptPath = om2.getText();
 					}
 				}
+			}else if(om.getQName().toString().equals("message_header")){
+				header =  om.toString();
 			}
 		}
 		OMElement res=null;
@@ -78,15 +89,16 @@ public class GetTotalNumsHandler {
 	    JSONObject totalnums = new JSONObject(responseStrBuilder.toString());
 	    
 	    //TRANSFORM JSON TO XML
-	    DocumentBuilderFactory docFactory = DocumentBuilderFactory.newInstance();
-		DocumentBuilder docBuilder = docFactory.newDocumentBuilder();
-		Document doc = docBuilder.newDocument();
-		Element totalNums = doc.createElement("totalnums");
 	    JSONArray groups=null;
 	    try{
 	    	groups = totalnums.getJSONArray("groups");
 	    }catch(Exception exception){
-	    	throw new Exception("EMPTY RESULT FROM CRYPTO ENGINE");
+	    	log.info("EMPTY RESULT FROM CRYPTO ENGINE");
+	    	String bodyStr = XMLUtil.convertDOMElementToString(body);
+		    bodyStr = bodyStr.substring(toRemove.length(),bodyStr.length());
+		    String xmlStr = "<response>"+header+status+bodyStr+"</response>";
+		    res =AXIOMUtil.stringToOM(xmlStr);
+			return res;
 	    }
 	    for(int i=0;i<groups.length();i++){
 	    	JSONObject obj = groups.getJSONObject(i);
@@ -115,7 +127,10 @@ public class GetTotalNumsHandler {
 	    	log.info("GROUP : "+obj.getString("group")+" "+obj.getString("totalnum"));
 	    }
 	    //log.info("DOC : "+XMLUtil.convertDOMToString(doc));
-	    res =AXIOMUtil.stringToOM(XMLUtil.convertDOMElementToString(totalNums));
+	    String bodyStr = XMLUtil.convertDOMElementToString(body);
+	    bodyStr = bodyStr.substring(toRemove.length(),bodyStr.length());
+	    String xmlStr = "<response>"+header+status+bodyStr+"</response>";
+	    res =AXIOMUtil.stringToOM(xmlStr);
 		return res;
 	}
 }
