@@ -41,6 +41,9 @@ public class GetTotalNumsHandler {
 		String clientPublicKey=null;
 		String conceptPath=null;
 		String header = null;
+		String fromTime =null;
+		String toTime=null;
+		String distribution=null;
 		while(topelems.hasNext()){
 			OMElement om = (OMElement) topelems.next();
 			if(om.getQName().toString().equals("message_body")){
@@ -51,6 +54,12 @@ public class GetTotalNumsHandler {
 						clientPublicKey = om2.getText();
 					}else if(om2.getQName().toString().equals("concept")){
 						conceptPath = om2.getText();
+					}else if(om2.getQName().toString().equals("fromtime")){
+						fromTime = om2.getText();
+					}else if(om2.getQName().toString().equals("totime")){
+						toTime = om2.getText();
+					}else if(om2.getQName().toString().equals("distribution")){
+						distribution = om2.getText();
 					}
 				}
 			}else if(om.getQName().toString().equals("message_header")){
@@ -66,6 +75,15 @@ public class GetTotalNumsHandler {
 		}
 		if(clientPublicKey!=null){
 			o.put("clientpublickey",clientPublicKey);
+		}
+		if(fromTime!=null){
+			o.put("fromtime",fromTime);
+		}
+		if(toTime!=null){
+			o.put("totime",toTime);
+		}
+		if(distribution!=null){
+			o.put("distribution",distribution);
 		}
 		
 		//SEND REQUEST WITH JSON TO CRYPTO ENGINE
@@ -104,21 +122,28 @@ public class GetTotalNumsHandler {
 	    	JSONObject obj = groups.getJSONObject(i);
 	    	Element totalNumGroup = doc.createElement("totalnum_group");
 	    	
-	    	String[] groupStr = obj.getString("group").split(",");
-	    	String locationStr = groupStr[0];
-	    	String timeStr = groupStr[1];
+	    	String locationStr=null;
+	    	Element time=null;
+	    	if(distribution.equals("point")){
+	    		String[] groupStr = obj.getString("group").split(",");
+		    	locationStr = groupStr[0];
+		    	String timeStr = groupStr[1];
+		    	time = doc.createElement("time");
+		    	time.appendChild(doc.createTextNode(timeStr));
+	    	}else{
+	    		locationStr = obj.getString("group");
+	    	}
 	    	
 	    	Element location = doc.createElement("location");
 	    	location.appendChild(doc.createTextNode(locationStr));
-	    	
-	    	Element time = doc.createElement("time");
-	    	time.appendChild(doc.createTextNode(timeStr));
 	    	
 	    	Element totalNum = doc.createElement("totalnum");
 	    	totalNum.appendChild(doc.createTextNode(obj.getString("totalnum")));
 	    	
 	    	totalNumGroup.appendChild(location);
-	    	totalNumGroup.appendChild(time);
+	    	if(distribution.equals("point")){
+	    		totalNumGroup.appendChild(time);
+	    	}
 	    	totalNumGroup.appendChild(totalNum);
 	    	
 	    	//log.info("XML : "+totalNumGroup.getTextContent());
