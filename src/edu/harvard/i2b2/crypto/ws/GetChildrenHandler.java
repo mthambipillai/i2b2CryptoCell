@@ -29,7 +29,7 @@ public class GetChildrenHandler {
 		log = l;
 	}
 	
-	public OMElement execute(OMElement getChildrenElement) throws Exception {
+	public OMElement execute(OMElement getChildrenElement, boolean noisy, boolean totalNumsRights) throws Exception {
 		Iterator<?> topelems = getChildrenElement.getChildElements();
 		String clientPublicKey=null;
 		while(topelems.hasNext()){
@@ -61,6 +61,9 @@ public class GetChildrenHandler {
 				conceptsXML = n.getChildNodes().item(1).getChildNodes();
 			}
 		}
+		if(!totalNumsRights){
+			return AXIOMUtil.stringToOM(response);
+		}
 		
 		//MAKE JSON
 		ArrayList<String> keys = findKeys(response);
@@ -73,6 +76,7 @@ public class GetChildrenHandler {
 		if(clientPublicKey!=null){
 			o.put("clientpublickey",clientPublicKey);
 		}
+		o.put("noisy",noisy);
 		
 		//SEND REQUEST WITH JSON TO CRYPTO ENGINE
 		totalNumUrl = new URL("http://127.0.0.1:7500/totalnum");

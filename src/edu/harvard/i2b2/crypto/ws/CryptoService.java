@@ -11,6 +11,8 @@
 package edu.harvard.i2b2.crypto.ws;
 
 
+import java.util.Arrays;
+
 import edu.harvard.i2b2.common.exception.I2B2Exception;
 import edu.harvard.i2b2.common.util.axis2.ServiceClient;
 
@@ -20,6 +22,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import edu.harvard.i2b2.crypto.util.QueryProcessorUtil;
+import edu.harvard.i2b2.crypto.util.Roles;
 
 public class CryptoService {
 	private static Log log = LogFactory.getLog(CryptoService.class);
@@ -28,6 +31,7 @@ public class CryptoService {
 	
 	private GetChildrenHandler getChildrenHandler = new GetChildrenHandler(log);
 	private GetTotalNumsHandler getTotalNumsHandler = new GetTotalNumsHandler(log);
+	private AccessControl accessControl = new AccessControl(log);
 	
 	public OMElement getModifiers(OMElement getModifiersElement) throws I2B2Exception {
 		log.info("GETMODIFIERS CALLED IN CRYPTO CELL");
@@ -62,7 +66,8 @@ public class CryptoService {
 		log.info("RECEIVED THIS FROM THE CLIENT :\n"+getTotalNumsElement);
 		OMElement res = null;
 		try{
-			res = getTotalNumsHandler.execute(getTotalNumsElement);
+			String[] roles = accessControl.getUserRoles(getTotalNumsElement);
+			res = getTotalNumsHandler.execute(getTotalNumsElement, roles);
 			log.info("SENDING THIS TO THE CLIENT :\n"+res);
 		}catch (Exception e){
 			log.error(e.getMessage());
@@ -75,8 +80,18 @@ public class CryptoService {
 		log.info("RECEIVED THIS FROM THE CLIENT :\n"+getChildrenElement);
 		OMElement res = null;
 		try {
-			res = getChildrenHandler.execute(getChildrenElement);
-			log.info("SENDING THIS TO THE CLIENT :\n"+res);
+			String[] roles = accessControl.getUserRoles(getChildrenElement);
+			if(AccessControl.checkRole(roles,Roles.totalNumsRoleName)){
+				res = getChildrenHandler.execute(getChildrenElement,false,true);
+				log.info("SENDING THIS TO THE CLIENT :\n"+res);
+			}else if(AccessControl.checkRole(roles,Roles.totalNumsNoisyRoleName)){
+				res = getChildrenHandler.execute(getChildrenElement,true,true);
+				log.info("SENDING THIS TO THE CLIENT :\n"+res);
+			}else{
+				log.info("REQUIRE HIGHER ROLE PRIVILEGE TO HAVE TOTALNUMS\n");
+				res = getChildrenHandler.execute(getChildrenElement,true,false);
+				log.info("SENDING THIS TO THE CLIENT :\n"+res);
+			}
 		} catch (Exception e){
 			log.error(e.getMessage());
 		}

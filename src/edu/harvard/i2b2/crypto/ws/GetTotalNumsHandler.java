@@ -20,6 +20,7 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
 import edu.harvard.i2b2.common.util.xml.XMLUtil;
+import edu.harvard.i2b2.crypto.util.Roles;
 
 public class GetTotalNumsHandler {
 	private static Log log = LogFactory.getLog(CryptoService.class);
@@ -28,7 +29,7 @@ public class GetTotalNumsHandler {
 		log = l;
 	}
 	
-	public OMElement execute(OMElement getTotalNumsElement) throws Exception {
+	public OMElement execute(OMElement getTotalNumsElement, String[] roles) throws Exception {
 		Iterator<?> topelems = getTotalNumsElement.getChildElements();
 		DocumentBuilderFactory docFactory = DocumentBuilderFactory.newInstance();
 		DocumentBuilder docBuilder = docFactory.newDocumentBuilder();
@@ -68,8 +69,33 @@ public class GetTotalNumsHandler {
 		}
 		OMElement res=null;
 		URL totalNumUrl;
-		//MAKE JSON
+		//MAKE JSON AND CHECK PERMISSION
 		JSONObject o = new JSONObject();
+		boolean noisy = true;
+		if(distribution!=null){
+			if(distribution.equals("point")){
+				if(AccessControl.checkRole(roles,Roles.totalNumsTimeRoleName)){
+					noisy=false;
+				}else if(AccessControl.checkRole(roles,Roles.totalNumsTimeNoisyRoleName)){
+					noisy=true;
+				}else{
+					throw new Exception("REQUIRE HIGHER ROLE PRIVILEGE\n");
+				}
+			}else if(distribution.equals("cumulative")){
+				if(AccessControl.checkRole(roles,Roles.totalNumsCumulRoleName)){
+					noisy=false;
+				}else if(AccessControl.checkRole(roles,Roles.totalNumsCumulNoisyRoleName)){
+					noisy=true;
+				}else{
+					throw new Exception("REQUIRE HIGHER ROLE PRIVILEGE\n");
+				}
+			}else{
+				throw new Exception("DISTRIBUTION NEED TO BE EITHER point OR cumulative\n");
+			}
+			o.put("distribution",distribution);
+		}else{
+			throw new Exception("DISTRIBUTION IS NULL\n");
+		}
 		if(conceptPath!=null){
 			o.put("conceptpath",conceptPath);
 		}
@@ -82,9 +108,8 @@ public class GetTotalNumsHandler {
 		if(toTime!=null){
 			o.put("totime",toTime);
 		}
-		if(distribution!=null){
-			o.put("distribution",distribution);
-		}
+		o.put("noisy",noisy);
+		
 		
 		//SEND REQUEST WITH JSON TO CRYPTO ENGINE
 		log.info("GONNA SEND");
