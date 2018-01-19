@@ -5,7 +5,10 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 
@@ -30,6 +33,7 @@ public class GetChildrenHandler {
 	}
 	
 	public OMElement execute(OMElement getChildrenElement, boolean noisy, boolean totalNumsRights) throws Exception {
+		long start = System.currentTimeMillis();
 		Iterator<?> topelems = getChildrenElement.getChildElements();
 		String clientPublicKey=null;
 		while(topelems.hasNext()){
@@ -46,7 +50,7 @@ public class GetChildrenHandler {
 			}
 		}
 		//String ontologyUrl = QueryProcessorUtil.getInstance().getOntologyUrl();
-		String ontologyUrl = "http://localhost:9090/i2b2/services/OntologyService/getChildren";
+		String ontologyUrl = CryptoService.ONTOLOGYURL+"getChildren";
 		OMElement res=null;
 		URL totalNumUrl;
 		//GET RESPONSE FROM ONTOLOGY CELL AND PARSE THE XML
@@ -79,7 +83,7 @@ public class GetChildrenHandler {
 		o.put("noisy",noisy);
 		
 		//SEND REQUEST WITH JSON TO CRYPTO ENGINE
-		totalNumUrl = new URL("http://127.0.0.1:7500/totalnum");
+		totalNumUrl = new URL(CryptoService.TOTALNUMENDPOINT);
 		HttpURLConnection conn=null;
 		try{
 			conn = (HttpURLConnection) totalNumUrl.openConnection();
@@ -93,6 +97,12 @@ public class GetChildrenHandler {
 			return AXIOMUtil.stringToOM(response);
 		}
 		
+		long end = System.currentTimeMillis();
+		long computationTime = end -start;
+		Date date = new Date(computationTime);
+		DateFormat formatter = new SimpleDateFormat("HH:mm:ss:SSS");
+		log.info("COMPUTATION TIME BEFORE CRYPTO ENGINE : "+formatter.format(date));
+		
 		//READ AND PARSE RESPONSE FROM CRYPTO ENGINE
 	    BufferedReader rd = new BufferedReader(new InputStreamReader(conn.getInputStream()));
 	    StringBuilder responseStrBuilder = new StringBuilder();
@@ -100,6 +110,7 @@ public class GetChildrenHandler {
 	    while ((inputStr = rd.readLine()) != null){
 	    	responseStrBuilder.append(inputStr);
 	    }
+	    start = System.currentTimeMillis();
 	    
 	    HashMap<String,String> pathsToNums = new HashMap<String,String>();
 	    
@@ -122,6 +133,13 @@ public class GetChildrenHandler {
 	    }
 	    String modified = XMLUtil.convertDOMToString(respXML);
 		res =AXIOMUtil.stringToOM(modified);
+		
+		end = System.currentTimeMillis();
+		computationTime = end -start;
+		date = new Date(computationTime);
+		formatter = new SimpleDateFormat("HH:mm:ss:SSS");
+		log.info("COMPUTATION TIME AFTER CRYPTO ENGINE : "+formatter.format(date));
+		
 		return res;
 	}
 	

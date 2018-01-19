@@ -26,6 +26,10 @@ import edu.harvard.i2b2.crypto.util.Roles;
 
 public class CryptoService {
 	private static Log log = LogFactory.getLog(CryptoService.class);
+	public static final String i2b2CONNECTORADDRESS = "http://127.0.0.1:7500/";
+	public static final String TOTALNUMENDPOINT = i2b2CONNECTORADDRESS+"totalnum";
+	public static final String TOTALNUMSENDPOINT = i2b2CONNECTORADDRESS+"totalnums";
+	public static final String ONTOLOGYURL = "http://localhost:9090/i2b2/services/OntologyService/";
 	
 	QueryProcessorUtil qpu = QueryProcessorUtil.getInstance();
 	
@@ -36,7 +40,7 @@ public class CryptoService {
 	public OMElement getModifiers(OMElement getModifiersElement) throws I2B2Exception {
 		log.info("GETMODIFIERS CALLED IN CRYPTO CELL");
 		//String url = qpu.getModifiersUrl();
-		String url = "http://localhost:9090/i2b2/services/OntologyService/getModifiers";
+		String url = ONTOLOGYURL+"getModifiers";
 		OMElement res=null;
 		try {		
 			String response = ServiceClient.sendREST(url, getModifiersElement);
@@ -50,7 +54,7 @@ public class CryptoService {
 	public OMElement getModifierChildren(OMElement getModifierChildrenElement) throws I2B2Exception {
 		log.info("GETMODIFIERCHILDREN CALLED IN CRYPTO CELL");
 		//String ontologyUrl = QueryProcessorUtil.getInstance().getOntologyUrl();
-		String ontologyUrl = "http://localhost:9090/i2b2/services/OntologyService/getModifierChildren";
+		String ontologyUrl = ONTOLOGYURL+"getModifierChildren";
 		OMElement res=null;
 		try {
 			String response = ServiceClient.sendREST(ontologyUrl, getModifierChildrenElement);
@@ -63,12 +67,12 @@ public class CryptoService {
 	
 	public OMElement getTotalNums(OMElement getTotalNumsElement) throws I2B2Exception {
 		log.info("GETTOTALNUMS CALLED IN CRYPTO CELL");
-		log.info("RECEIVED THIS FROM THE CLIENT :\n"+getTotalNumsElement);
+		//log.info("RECEIVED THIS FROM THE CLIENT :\n"+getTotalNumsElement);
 		OMElement res = null;
 		try{
 			String[] roles = accessControl.getUserRoles(getTotalNumsElement);
 			res = getTotalNumsHandler.execute(getTotalNumsElement, roles);
-			log.info("SENDING THIS TO THE CLIENT :\n"+res);
+			//log.info("SENDING THIS TO THE CLIENT :\n"+res);
 		}catch (Exception e){
 			log.error(e.getMessage());
 		}
@@ -77,20 +81,20 @@ public class CryptoService {
 	
 	public OMElement getChildren(OMElement getChildrenElement) throws I2B2Exception {
 		log.info("GETCHILDREN CALLED IN CRYPTO CELL");
-		log.info("RECEIVED THIS FROM THE CLIENT :\n"+getChildrenElement);
+		//log.info("RECEIVED THIS FROM THE CLIENT :\n"+getChildrenElement);
 		OMElement res = null;
 		try {
 			String[] roles = accessControl.getUserRoles(getChildrenElement);
 			if(AccessControl.checkRole(roles,Roles.totalNumsRoleName)){
 				res = getChildrenHandler.execute(getChildrenElement,false,true);
-				log.info("SENDING THIS TO THE CLIENT :\n"+res);
+				//log.info("SENDING THIS TO THE CLIENT :\n"+res);
 			}else if(AccessControl.checkRole(roles,Roles.totalNumsNoisyRoleName)){
 				res = getChildrenHandler.execute(getChildrenElement,true,true);
-				log.info("SENDING THIS TO THE CLIENT :\n"+res);
+				//log.info("SENDING THIS TO THE CLIENT :\n"+res);
 			}else{
 				log.info("REQUIRE HIGHER ROLE PRIVILEGE TO HAVE TOTALNUMS\n");
 				res = getChildrenHandler.execute(getChildrenElement,true,false);
-				log.info("SENDING THIS TO THE CLIENT :\n"+res);
+				//log.info("SENDING THIS TO THE CLIENT :\n"+res);
 			}
 		} catch (Exception e){
 			log.error(e.getMessage());

@@ -5,6 +5,9 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.Iterator;
 
 import javax.xml.parsers.DocumentBuilder;
@@ -30,6 +33,7 @@ public class GetTotalNumsHandler {
 	}
 	
 	public OMElement execute(OMElement getTotalNumsElement, String[] roles) throws Exception {
+		long start = System.currentTimeMillis();
 		Iterator<?> topelems = getTotalNumsElement.getChildElements();
 		DocumentBuilderFactory docFactory = DocumentBuilderFactory.newInstance();
 		DocumentBuilder docBuilder = docFactory.newDocumentBuilder();
@@ -112,8 +116,7 @@ public class GetTotalNumsHandler {
 		
 		
 		//SEND REQUEST WITH JSON TO CRYPTO ENGINE
-		log.info("GONNA SEND");
-		totalNumUrl = new URL("http://127.0.0.1:7500/totalnums");
+		totalNumUrl = new URL(CryptoService.TOTALNUMSENDPOINT);
 		HttpURLConnection conn = (HttpURLConnection) totalNumUrl.openConnection();
 		conn.setRequestProperty("Content-Type", "application/json; charset=UTF-8");
 		conn.setDoOutput(true);
@@ -121,14 +124,21 @@ public class GetTotalNumsHandler {
 		os.write(o.toString().getBytes("UTF-8"));
 		os.close();
 		
+		long end = System.currentTimeMillis();
+		long computationTime = end -start;
+		Date date = new Date(computationTime);
+		DateFormat formatter = new SimpleDateFormat("HH:mm:ss:SSS");
+		log.info("COMPUTATION TIME BEFORE CRYPTO ENGINE : "+formatter.format(date));
+		
 		//READ AND PARSE RESPONSE FROM CRYPTO ENGINE TO JSON
+		
 	    BufferedReader rd = new BufferedReader(new InputStreamReader(conn.getInputStream()));
 	    StringBuilder responseStrBuilder = new StringBuilder();
 	    String inputStr;
 	    while ((inputStr = rd.readLine()) != null){
 	    	responseStrBuilder.append(inputStr);
 	    }
-	    
+	    start = System.currentTimeMillis();
 	    JSONObject totalnums = new JSONObject(responseStrBuilder.toString());
 	    
 	    //TRANSFORM JSON TO XML
@@ -171,16 +181,20 @@ public class GetTotalNumsHandler {
 	    	}
 	    	totalNumGroup.appendChild(totalNum);
 	    	
-	    	//log.info("XML : "+totalNumGroup.getTextContent());
-	    	
 	    	totalNums.appendChild(totalNumGroup);
-	    	log.info("GROUP : "+obj.getString("group")+" "+obj.getString("totalnum"));
+	    	//log.info("GROUP : "+obj.getString("group")+" "+obj.getString("totalnum"));
 	    }
-	    //log.info("DOC : "+XMLUtil.convertDOMToString(doc));
 	    String bodyStr = XMLUtil.convertDOMElementToString(body);
 	    bodyStr = bodyStr.substring(toRemove.length(),bodyStr.length());
 	    String xmlStr = "<response>"+header+status+bodyStr+"</response>";
 	    res =AXIOMUtil.stringToOM(xmlStr);
+	    
+	    end = System.currentTimeMillis();
+		computationTime = end -start;
+		date = new Date(computationTime);
+		formatter = new SimpleDateFormat("HH:mm:ss:SSS");
+		log.info("COMPUTATION TIME AFTER CRYPTO ENGINE : "+formatter.format(date));
+		
 		return res;
 	}
 }
