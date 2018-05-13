@@ -4,8 +4,8 @@ for researchers to gain insight about distributed medical data in a fully secure
 
 ## Documentation
 
-Readers should first be familiar with the i2b2 framework : https://www.i2b2.org/ .
-The global design of the new Crypto Cell and the other new components it interacts with can be found in the report : https://github.com/mthambipillai/i2b2CryptoCell/blob/master/report.pdf
+Readers should first be familiar with the [i2b2 framework](https://www.i2b2.org/).
+The global design of the new Crypto Cell and the other new components it interacts with can be found in the [report](https://github.com/mthambipillai/i2b2CryptoCell/blob/master/report.pdf)
 
 ## Installation
 
