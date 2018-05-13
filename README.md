@@ -9,5 +9,5 @@ The global design of the new Crypto Cell and the other new components it interac
 
 ## Installation
 
-The basic installation is the same as the other i2b2 cells : https://community.i2b2.org/wiki/display/getstarted/i2b2+Installation+Guide
+The basic installation is the same as the other i2b2 cells and the guide can be found [here](https://community.i2b2.org/wiki/display/getstarted/i2b2+Installation+Guide).
 More specific details about the parameters of the Crypto cell can be found in appendix A.2 of the report.
